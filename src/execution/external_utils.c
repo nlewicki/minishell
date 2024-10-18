@@ -6,7 +6,7 @@
 /*   By: mhummel <mhummel@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/18 11:10:53 by mhummel           #+#    #+#             */
-/*   Updated: 2024/10/18 11:28:05 by mhummel          ###   ########.fr       */
+/*   Updated: 2024/10/18 21:08:47 by mhummel          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,6 +17,7 @@ int	handle_command_not_found(char **args)
 	ft_putstr_fd("minishell: ", 2);
 	ft_putstr_fd(args[0], 2);
 	ft_putendl_fd(": command not found", 2);
+	*exit_status() = 127;
 	return (127);
 }
 
