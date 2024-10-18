@@ -6,7 +6,7 @@
 /*   By: mhummel <mhummel@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/02 11:20:30 by nlewicki          #+#    #+#             */
-/*   Updated: 2024/10/18 13:35:30 by mhummel          ###   ########.fr       */
+/*   Updated: 2024/10/18 14:37:35 by mhummel          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -52,11 +52,16 @@ void	main_loop(void)
 		{
 			handle_history(input);
 			tokens = parse_input(input);
+			if (tokens == NULL)
+			{
+				free(input);
+				continue ;
+			}
 			// print_token_list(tokens);
 			tabel = create_tabel(tokens);
-			print_tabel(tabel);
+			// print_tabel(tabel);
 			new_tabel = expansion(tabel);
-			print_tabel(new_tabel);
+			// print_tabel(new_tabel);
 			execution(new_tabel);
 			free(input);
 			ft_lstclear(&tokens, free_token);
@@ -75,11 +80,13 @@ int	main(int argc, char **argv, char **envp)
 	if (!env_vars())
 		return (perror("Failed to copy envp"), 1);
 	set_env_vars(*env_vars());
+
 	// debugg
 	// char **env = *env_vars();
 	// for (int i = 0; env[i]; i++)
 	// 	printf("env[%d]: %s\n", i, env[i]);
 	// printf("\nPATH: %s\n", get_our_env("PATH"));
+	*exit_status() = 0;
 	handle_shlvl();
 	handle_signals();
 	main_loop();
