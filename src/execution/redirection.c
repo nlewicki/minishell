@@ -6,7 +6,7 @@
 /*   By: mhummel <mhummel@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/18 10:16:29 by nlewicki          #+#    #+#             */
-/*   Updated: 2024/10/18 14:17:13 by mhummel          ###   ########.fr       */
+/*   Updated: 2024/10/18 14:22:35 by mhummel          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,7 +31,7 @@ int	redirect_input(char *file)
 	return (0);
 }
 
-static int	redirect_output(char *file, int append)
+int	redirect_output(char *file, int append)
 {
 	int	fd;
 	int	flags;
