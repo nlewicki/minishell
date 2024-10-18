@@ -6,7 +6,7 @@
 /*   By: mhummel <mhummel@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/02 09:08:07 by nlewicki          #+#    #+#             */
-/*   Updated: 2024/10/18 12:50:51 by mhummel          ###   ########.fr       */
+/*   Updated: 2024/10/18 13:43:18 by mhummel          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -174,13 +174,16 @@ int					fork_and_execute(int pipe_fds[][2], t_list *current, int i,
 int					wait_for_children(void);
 int					setup_child_pipes(int pipe_fds[][2], int i, int num_commands);
 // redirection
-int					parse_redirections(char *input, t_redirection *redirections,
-						int *redirection_count);
 int					redirect_input(char *file);
-int					redirect_output(char *file, int flags);
+int					redirect_output(char *file, int append);
 int					handle_heredoc(char *delimiter);
-int					apply_redirections(t_redirection *redirections,
-						int redirection_count);
+int					handle_redirections(t_list *command_list);
+// redirection utils
+void				restore_std_fds(int orig_stdin, int orig_stdout);
+int					is_redirection(char *symbol);
+void				print_redirection_error(char *filename, char *error_msg);
+int					apply_single_redirection(char *symbol, char *filename);
+int					apply_redirections(t_command *cmd);
 // signals
 void				sigint_handler(int sig);
 void				handle_signals(void);

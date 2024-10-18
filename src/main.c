@@ -6,7 +6,7 @@
 /*   By: mhummel <mhummel@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/02 11:20:30 by nlewicki          #+#    #+#             */
-/*   Updated: 2024/10/18 11:48:38 by mhummel          ###   ########.fr       */
+/*   Updated: 2024/10/18 13:35:30 by mhummel          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,11 +17,21 @@ int		g_signal = 0;
 int	execution(t_list *tabel)
 {
 	int	result;
+	int	orig_stdin;
+	int	orig_stdout;
 
+	orig_stdin = dup(STDIN_FILENO);
+	orig_stdout = dup(STDOUT_FILENO);
+	if (handle_redirections(tabel))
+	{
+		restore_std_fds(orig_stdin, orig_stdout);
+		return (1);
+	}
 	if (ft_lstsize(tabel) > 1)
 		result = execute_piped_commands(tabel);
 	else
 		result = execute_command(tabel);
+	restore_std_fds(orig_stdin, orig_stdout);
 	return (result);
 }
 
@@ -65,13 +75,11 @@ int	main(int argc, char **argv, char **envp)
 	if (!env_vars())
 		return (perror("Failed to copy envp"), 1);
 	set_env_vars(*env_vars());
-
 	// debugg
 	// char **env = *env_vars();
 	// for (int i = 0; env[i]; i++)
 	// 	printf("env[%d]: %s\n", i, env[i]);
 	// printf("\nPATH: %s\n", get_our_env("PATH"));
-
 	handle_shlvl();
 	handle_signals();
 	main_loop();

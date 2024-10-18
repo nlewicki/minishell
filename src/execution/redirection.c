@@ -6,47 +6,11 @@
 /*   By: mhummel <mhummel@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/18 10:16:29 by nlewicki          #+#    #+#             */
-/*   Updated: 2024/10/03 12:53:29 by mhummel          ###   ########.fr       */
+/*   Updated: 2024/10/18 14:02:07 by mhummel          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minishell.h"
-
-int	parse_redirections(char *input, t_redirection *redirections,
-		int *redirection_count)
-{
-	char	*token;
-	char	*saveptr;
-
-	*redirection_count = 0;
-	token = ft_strtok_r(input, " \t", &saveptr);
-	while (token != NULL && *redirection_count < MAX_REDIRECTIONS)
-	{
-		if (ft_strcmp(token, "<") == 0)
-			redirections[*redirection_count].type = 0;
-		else if (ft_strcmp(token, ">") == 0)
-			redirections[*redirection_count].type = 1;
-		else if (ft_strcmp(token, "<<") == 0)
-			redirections[*redirection_count].type = 2;
-		else if (ft_strcmp(token, ">>") == 0)
-			redirections[*redirection_count].type = 3;
-		else
-		{
-			token = ft_strtok_r(NULL, " \t", &saveptr);
-			continue ;
-		}
-		token = ft_strtok_r(NULL, " \t", &saveptr);
-		if (token == NULL)
-		{
-			write(2, "Error: Missing argument for redirection\n", 39);
-			return (1);
-		}
-		redirections[*redirection_count].file = ft_strdup(token);
-		(*redirection_count)++;
-		token = ft_strtok_r(NULL, " \t", &saveptr);
-	}
-	return (0);
-}
 
 int	redirect_input(char *file)
 {
@@ -54,22 +18,36 @@ int	redirect_input(char *file)
 
 	fd = open(file, O_RDONLY);
 	if (fd < 0)
-		return (perror("Error opening input file"), 1);
+	{
+		print_redirection_error(file, "No such file or directory");
+		return (1);
+	}
 	if (dup2(fd, STDIN_FILENO) == -1)
-		return (perror("Error redirecting input"), close(fd), 1);
-	return (close(fd), 0);
+	{
+		close(fd);
+		return (1);
+	}
+	close(fd);
+	return (0);
 }
 
-int	redirect_output(char *file, int flags)
+static int	redirect_output(char *file, int append)
 {
 	int	fd;
+	int	flags;
 
-	fd = open(file, O_WRONLY | O_CREAT | flags, 0644);
+	flags = O_WRONLY | O_CREAT;
+	flags |= (append) ? O_APPEND : O_TRUNC;
+	fd = open(file, flags, 0644);
 	if (fd < 0)
-		return (perror("Error opening output file"), 1);
+	{
+		ft_putstr_fd("minishell: ", 2);
+		ft_putstr_fd(file, 2);
+		ft_putendl_fd(": Permission denied", 2);
+		return (1);
+	}
 	if (dup2(fd, STDOUT_FILENO) == -1)
 	{
-		perror("Error redirecting output");
 		close(fd);
 		return (1);
 	}
@@ -79,31 +57,25 @@ int	redirect_output(char *file, int flags)
 
 int	handle_heredoc(char *delimiter)
 {
-	int		pipe_fd[2];
 	char	*line;
-	size_t	len;
+	int		pipe_fd[2];
 
 	if (pipe(pipe_fd) == -1)
-		return (perror("Error creating pipe"), 1);
-	while ((line = get_next_line(STDIN_FILENO)) != NULL)
+		return (1);
+	while (1)
 	{
-		// Entferne das Newline-Zeichen am Ende der Eingabe
-		len = strlen(line);
-		if (len > 0 && line[len - 1] == '\n')
-			line[len - 1] = '\0';
-		if (strcmp(line, delimiter) == 0)
+		line = readline("> ");
+		if (!line || ft_strcmp(line, delimiter) == 0)
 		{
 			free(line);
 			break ;
 		}
-		write(pipe_fd[1], line, strlen(line));
-		write(pipe_fd[1], "\n", 1);
+		ft_putendl_fd(line, pipe_fd[1]);
 		free(line);
 	}
 	close(pipe_fd[1]);
 	if (dup2(pipe_fd[0], STDIN_FILENO) == -1)
 	{
-		perror("Error redirecting heredoc");
 		close(pipe_fd[0]);
 		return (1);
 	}
@@ -111,41 +83,27 @@ int	handle_heredoc(char *delimiter)
 	return (0);
 }
 
-int	apply_redirection(t_redirection *redirection)
+int	handle_redirections(t_list *command_list)
 {
-	if (redirection->type == 0)
-		return (redirect_input(redirection->file));
-	if (redirection->type == 1)
-		return (redirect_output(redirection->file, O_TRUNC));
-	if (redirection->type == 2)
-		return (handle_heredoc(redirection->file));
-	if (redirection->type == 3)
-		return (redirect_output(redirection->file, O_APPEND));
-	return (0);
-}
+	t_list		*current;
+	t_command	*cmd;
+	int			orig_stdin;
+	int			orig_stdout;
 
-int	apply_redirections(t_redirection *redirections, int count)
-{
-	int	i;
-	int	original_stdin;
-	int	original_stdout;
-
-	original_stdin = dup(STDIN_FILENO);
-	original_stdout = dup(STDOUT_FILENO);
-	i = 0;
-	while (i < count)
+	orig_stdin = dup(STDIN_FILENO);
+	orig_stdout = dup(STDOUT_FILENO);
+	current = command_list;
+	while (current)
 	{
-		if (apply_redirection(&redirections[i]))
+		cmd = (t_command *)current->content;
+		if (apply_redirections(cmd))
 		{
-			dup2(original_stdin, STDIN_FILENO);
-			dup2(original_stdout, STDOUT_FILENO);
-			close(original_stdin);
-			close(original_stdout);
+			restore_std_fds(orig_stdin, orig_stdout);
 			return (1);
 		}
-		i++;
+		current = current->next;
 	}
-	close(original_stdin);
-	close(original_stdout);
+	close(orig_stdin);
+	close(orig_stdout);
 	return (0);
 }
