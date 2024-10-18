@@ -6,7 +6,7 @@
 /*   By: mhummel <mhummel@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/02 09:08:07 by nlewicki          #+#    #+#             */
-/*   Updated: 2024/10/18 14:16:33 by mhummel          ###   ########.fr       */
+/*   Updated: 2024/10/18 13:43:18 by mhummel          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -93,9 +93,6 @@ typedef struct s_command
 	char			**red_symbol;
 }					t_command;
 
-
-char	*append_var_value(char **result, char *var_value);
-size_t	get_result_len(char *result);
 char				*expand_env_variables(char *src);
 char				*handle_dollar(char **result, char **start, char **end);
 char				*copy_until_dollar(char **result, char *start, char *end);

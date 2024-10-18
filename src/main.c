@@ -6,7 +6,7 @@
 /*   By: mhummel <mhummel@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/02 11:20:30 by nlewicki          #+#    #+#             */
-/*   Updated: 2024/10/18 14:18:16 by mhummel          ###   ########.fr       */
+/*   Updated: 2024/10/18 13:35:30 by mhummel          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -52,16 +52,11 @@ void	main_loop(void)
 		{
 			handle_history(input);
 			tokens = parse_input(input);
-			if (tokens == NULL)
-			{
-				free(input);
-				continue ;
-			}
 			// print_token_list(tokens);
 			tabel = create_tabel(tokens);
-			// print_tabel(tabel);
+			print_tabel(tabel);
 			new_tabel = expansion(tabel);
-			// print_tabel(new_tabel);
+			print_tabel(new_tabel);
 			execution(new_tabel);
 			free(input);
 			ft_lstclear(&tokens, free_token);
